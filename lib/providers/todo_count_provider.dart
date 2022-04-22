@@ -1,8 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
-import 'package:todo_test_app_provider/providers/list_provider.dart';
-
-import '../models/todo.dart';
+import 'list_provider.dart';
 
 class TodoCountState extends Equatable {
   final int todoCount;
@@ -15,7 +13,6 @@ class TodoCountState extends Equatable {
   }
 
   TodoCountState copyWith({
-    List<Todo>? todos,
     int? todoCount,
   }) {
     return TodoCountState(
@@ -34,9 +31,15 @@ class TodoCountProvider with ChangeNotifier {
   TodoCountState _state = TodoCountState.initial();
   TodoCountState get state => _state;
 
-  void update(ListProvider todos) {
-    final todosCount = todos.state.todos
-        .where((todo) => todo.isChecked == false)
+  TodoCountProvider({
+    required this.listProvider,
+  });
+
+  final ListProvider listProvider;
+
+  void update() {
+    final todosCount = listProvider.state.todos
+        .where((todo) => todo.isChecked == 0)
         .toList()
         .length;
     _state = _state.copyWith(todoCount: todosCount);

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:todo_test_app_provider/providers/filter_provider.dart';
-import 'package:todo_test_app_provider/providers/filtered_todos_provider.dart';
-import 'package:todo_test_app_provider/providers/list_provider.dart';
-import 'package:todo_test_app_provider/providers/search_provider.dart';
-import 'package:todo_test_app_provider/providers/todo_count_provider.dart';
-import 'package:todo_test_app_provider/screens/home_screen.dart';
+import 'providers/filter_provider.dart';
+import 'providers/filtered_todos_provider.dart';
+import 'providers/list_provider.dart';
+import 'providers/search_provider.dart';
+import 'providers/todo_count_provider.dart';
+import 'repositories/db/db_repository.dart';
+import 'screens/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,8 +19,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<ListProvider>(
-          create: (context) => ListProvider(),
+        Provider<DbRepository>(
+          create: (context) => DbRepository(),
+        ),
+        ChangeNotifierProxyProvider<DbRepository, ListProvider>(
+          create: (context) =>
+              ListProvider(dbRepository: context.read<DbRepository>()),
+          update: (BuildContext context, DbRepository dbRepository,
+                  ListProvider? listProvider) =>
+              listProvider!..getTodos(),
         ),
         ChangeNotifierProvider<SearchProvider>(
           create: (context) => SearchProvider(),
@@ -28,13 +36,14 @@ class MyApp extends StatelessWidget {
           create: (context) => FilterProvider(),
         ),
         ChangeNotifierProxyProvider<ListProvider, TodoCountProvider>(
-          create: (context) => TodoCountProvider(),
+          create: (context) =>
+              TodoCountProvider(listProvider: context.read<ListProvider>()),
           update: (
             BuildContext context,
-            ListProvider todoList,
+            ListProvider listProvider,
             TodoCountProvider? todoCount,
           ) =>
-              todoCount!..update(todoList),
+              todoCount!..update(),
         ),
         ChangeNotifierProxyProvider3<ListProvider, FilterProvider,
             SearchProvider, FiltredTodosProvider>(
@@ -43,16 +52,16 @@ class MyApp extends StatelessWidget {
           ),
           update: (
             BuildContext context,
-            ListProvider list,
-            FilterProvider filter,
-            SearchProvider search,
-            FiltredTodosProvider? filtredTodos,
+            ListProvider dbRepository,
+            FilterProvider filterProvider,
+            SearchProvider searchProvider,
+            FiltredTodosProvider? filtredTodosProvider,
           ) =>
-              filtredTodos!
+              filtredTodosProvider!
                 ..update(
-                  filterProvider: filter,
-                  listProvider: list,
-                  searchProvider: search,
+                  filterProvider: filterProvider,
+                  searchProvider: searchProvider,
+                  listProvider: dbRepository,
                 ),
         ),
       ],

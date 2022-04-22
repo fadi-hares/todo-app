@@ -1,6 +1,10 @@
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:todo_test_app_provider/providers/search_provider.dart';
+import '../models/custom_error.dart';
+import '../providers/search_provider.dart';
+import '../repositories/db/db_repository.dart';
+import '../utils/error_dialog.dart';
 
 import '../providers/list_provider.dart';
 
@@ -38,8 +42,18 @@ class _FormElementsState extends State<FormElements> {
             ),
             onFieldSubmitted: (String? value) {
               _addTodo.currentState!.save();
-              if (_addTodo.currentState!.validate())
-                context.read<ListProvider>().addTodo(value!);
+              if (_addTodo.currentState!.validate()) {
+                try {
+                  context.read<ListProvider>().addTodo(
+                        TodoModelCompanion(
+                          desc: drift.Value(value!),
+                          isChecked: drift.Value(0),
+                        ),
+                      );
+                } on CustomError catch (e) {
+                  showErrorDialog(context, e);
+                }
+              }
               _addTodoController.clear();
             },
             validator: (String? value) {

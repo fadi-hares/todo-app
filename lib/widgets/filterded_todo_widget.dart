@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:todo_test_app_provider/models/todo.dart';
-import 'package:todo_test_app_provider/providers/filter_provider.dart';
-import 'package:todo_test_app_provider/providers/filtered_todos_provider.dart';
-import 'package:todo_test_app_provider/providers/list_provider.dart';
+import '../models/custom_error.dart';
+import '../providers/filter_provider.dart';
+import '../providers/filtered_todos_provider.dart';
+import '../providers/list_provider.dart';
+import '../repositories/db/db_repository.dart';
+import 'package:drift/drift.dart' as drift;
+import '../utils/error_dialog.dart';
 
 class FilterdTodoWidget extends StatefulWidget {
   const FilterdTodoWidget({Key? key}) : super(key: key);
@@ -71,9 +74,13 @@ class _FilterdTodoWidgetState extends State<FilterdTodoWidget> {
                   return Dismissible(
                     key: ValueKey(todoList[index].id),
                     onDismissed: (_) {
-                      context
-                          .read<ListProvider>()
-                          .removeTodo(todoList[index].id);
+                      try {
+                        context
+                            .read<ListProvider>()
+                            .removeTodo(todoList[index].id);
+                      } on CustomError catch (e) {
+                        showErrorDialog(context, e);
+                      }
                     },
                     confirmDismiss: (_) {
                       return showDialog(
@@ -123,7 +130,7 @@ class TodoItem extends StatelessWidget {
   }) : super(key: key);
 
   final int index;
-  final List<Todo> todoList;
+  final List<TodoModelData> todoList;
   TextEditingController _controller = TextEditingController();
 
   @override
@@ -144,10 +151,18 @@ class TodoItem extends StatelessWidget {
                 child: Text('Ok'),
                 onPressed: () {
                   if (_controller.text.trim().isNotEmpty) {
-                    context
-                        .read<ListProvider>()
-                        .editTodo(todoList[index].id, _controller.text);
-                    Navigator.pop(context);
+                    try {
+                      context.read<ListProvider>().editTodo(
+                            TodoModelCompanion(
+                              id: drift.Value(todoList[index].id),
+                              desc: drift.Value(_controller.text),
+                              isChecked: drift.Value(todoList[index].isChecked),
+                            ),
+                          );
+                      Navigator.pop(context);
+                    } on CustomError catch (e) {
+                      showErrorDialog(context, e);
+                    }
                   }
                 },
               ),
@@ -164,9 +179,19 @@ class TodoItem extends StatelessWidget {
       child: ListTile(
         title: Text(todoList[index].desc),
         trailing: Checkbox(
-          value: todoList[index].isChecked,
+          value: todoList[index].isChecked == 1 ? true : false,
           onChanged: (newValue) {
-            context.read<ListProvider>().toggleTodo(todoList[index].id);
+            try {
+              context.read<ListProvider>().editTodo(
+                    TodoModelCompanion(
+                      id: drift.Value(todoList[index].id),
+                      desc: drift.Value(todoList[index].desc),
+                      isChecked: drift.Value(newValue == true ? 1 : 0),
+                    ),
+                  );
+            } on CustomError catch (e) {
+              showErrorDialog(context, e);
+            }
           },
         ),
       ),
