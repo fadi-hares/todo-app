@@ -23,19 +23,19 @@ class DbRepository extends _$DbRepository {
   DbRepository() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
-  // @override
-  // MigrationStrategy get migration => MigrationStrategy(
-  //       beforeOpen: (details) async {
-  //         await customStatement('PRAGMA foreign_keys = ON');
-  //       },
-  //       onUpgrade: (m, from, to) async {
-  //         if (from == 1) {
-  //           await m.recreateAllViews();
-  //         }
-  //       },
-  //     );
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        beforeOpen: (details) async {
+          await customStatement('PRAGMA foreign_keys = ON');
+        },
+        onUpgrade: (m, from, to) async {
+          if (from == 1) {
+            await m.recreateAllViews();
+          }
+        },
+      );
 
   Future<List<TodoModelData>> getTodos() async {
     try {

@@ -177,7 +177,14 @@ class TodoItem extends StatelessWidget {
         );
       },
       child: ListTile(
-        title: Text(todoList[index].desc),
+        title: Text(
+          todoList[index].desc,
+          style: TextStyle(
+            decoration: todoList[index].isChecked == 1
+                ? TextDecoration.lineThrough
+                : TextDecoration.none,
+          ),
+        ),
         trailing: Checkbox(
           value: todoList[index].isChecked == 1 ? true : false,
           onChanged: (newValue) {

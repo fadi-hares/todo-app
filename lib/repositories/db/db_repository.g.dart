@@ -10,13 +10,9 @@ part of 'db_repository.dart';
 class TodoModelData extends DataClass implements Insertable<TodoModelData> {
   final int id;
   final String desc;
-  final int? isChecked;
-  TodoModelData({
-    required this.id,
-    required this.desc,
-    this.isChecked,
-  });
-
+  final int isChecked;
+  TodoModelData(
+      {required this.id, required this.desc, required this.isChecked});
   factory TodoModelData.fromData(Map<String, dynamic> data, {String? prefix}) {
     final effectivePrefix = prefix ?? '';
     return TodoModelData(
@@ -25,18 +21,15 @@ class TodoModelData extends DataClass implements Insertable<TodoModelData> {
       desc: const StringType()
           .mapFromDatabaseResponse(data['${effectivePrefix}desc'])!,
       isChecked: const IntType()
-          .mapFromDatabaseResponse(data['${effectivePrefix}is_checked']),
+          .mapFromDatabaseResponse(data['${effectivePrefix}is_checked'])!,
     );
   }
-
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['desc'] = Variable<String>(desc);
-    if (!nullToAbsent || isChecked != null) {
-      map['is_checked'] = Variable<int?>(isChecked);
-    }
+    map['is_checked'] = Variable<int>(isChecked);
     return map;
   }
 
@@ -44,9 +37,7 @@ class TodoModelData extends DataClass implements Insertable<TodoModelData> {
     return TodoModelCompanion(
       id: Value(id),
       desc: Value(desc),
-      isChecked: isChecked == null && nullToAbsent
-          ? const Value.absent()
-          : Value(isChecked),
+      isChecked: Value(isChecked),
     );
   }
 
@@ -56,17 +47,16 @@ class TodoModelData extends DataClass implements Insertable<TodoModelData> {
     return TodoModelData(
       id: serializer.fromJson<int>(json['id']),
       desc: serializer.fromJson<String>(json['desc']),
-      isChecked: serializer.fromJson<int?>(json['isChecked']),
+      isChecked: serializer.fromJson<int>(json['isChecked']),
     );
   }
-
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'desc': serializer.toJson<String>(desc),
-      'isChecked': serializer.toJson<int?>(isChecked),
+      'isChecked': serializer.toJson<int>(isChecked),
     };
   }
 
@@ -76,7 +66,6 @@ class TodoModelData extends DataClass implements Insertable<TodoModelData> {
         desc: desc ?? this.desc,
         isChecked: isChecked ?? this.isChecked,
       );
-
   @override
   String toString() {
     return (StringBuffer('TodoModelData(')
@@ -101,7 +90,7 @@ class TodoModelData extends DataClass implements Insertable<TodoModelData> {
 class TodoModelCompanion extends UpdateCompanion<TodoModelData> {
   final Value<int> id;
   final Value<String> desc;
-  final Value<int?> isChecked;
+  final Value<int> isChecked;
   const TodoModelCompanion({
     this.id = const Value.absent(),
     this.desc = const Value.absent(),
@@ -110,12 +99,13 @@ class TodoModelCompanion extends UpdateCompanion<TodoModelData> {
   TodoModelCompanion.insert({
     this.id = const Value.absent(),
     required String desc,
-    this.isChecked = const Value.absent(),
-  }) : desc = Value(desc);
+    required int isChecked,
+  })  : desc = Value(desc),
+        isChecked = Value(isChecked);
   static Insertable<TodoModelData> custom({
     Expression<int>? id,
     Expression<String>? desc,
-    Expression<int?>? isChecked,
+    Expression<int>? isChecked,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -125,7 +115,7 @@ class TodoModelCompanion extends UpdateCompanion<TodoModelData> {
   }
 
   TodoModelCompanion copyWith(
-      {Value<int>? id, Value<String>? desc, Value<int?>? isChecked}) {
+      {Value<int>? id, Value<String>? desc, Value<int>? isChecked}) {
     return TodoModelCompanion(
       id: id ?? this.id,
       desc: desc ?? this.desc,
@@ -143,7 +133,7 @@ class TodoModelCompanion extends UpdateCompanion<TodoModelData> {
       map['desc'] = Variable<String>(desc.value);
     }
     if (isChecked.present) {
-      map['is_checked'] = Variable<int?>(isChecked.value);
+      map['is_checked'] = Variable<int>(isChecked.value);
     }
     return map;
   }
@@ -180,8 +170,8 @@ class $TodoModelTable extends TodoModel
   final VerificationMeta _isCheckedMeta = const VerificationMeta('isChecked');
   @override
   late final GeneratedColumn<int?> isChecked = GeneratedColumn<int?>(
-      'is_checked', aliasedName, true,
-      type: const IntType(), requiredDuringInsert: false);
+      'is_checked', aliasedName, false,
+      type: const IntType(), requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns => [id, desc, isChecked];
   @override
@@ -205,6 +195,8 @@ class $TodoModelTable extends TodoModel
     if (data.containsKey('is_checked')) {
       context.handle(_isCheckedMeta,
           isChecked.isAcceptableOrUnknown(data['is_checked']!, _isCheckedMeta));
+    } else if (isInserting) {
+      context.missing(_isCheckedMeta);
     }
     return context;
   }
